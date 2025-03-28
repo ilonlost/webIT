@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row animate__animated animate__fadeIn">
+  {% for url in urls %}
+  <div class="col-md-3 mb-4">
+    <div class="card url-tile">
+      <div class="card-body text-center position-relative">
+        {% if is_admin %}
+        <button class="btn btn-sm btn-danger delete-url position-absolute top-0 end-0 m-2"
+                data-id="{{ url.id }}">×</button>
+        <button class="btn btn-sm btn-warning edit-url position-absolute top-0 start-0 m-2"
+                data-id="{{ url.id }}" data-bs-toggle="modal" data-bs-target="#editUrlModal">✎</button>
+        {% endif %}
+        <a href="{{ url.url }}" target="_blank" class="text-decoration-none text-white">
+          {% if url.icon.startswith('http') or url.icon in ['globe', 'github', 'server', 'gear', 'cpu', 'display', 'hdd', 'zabbix'] %}
+          <i class="bi bi-{{ url.icon }} fs-2 mb-2"></i>
+          {% else %}
+          <img src="{{ url_for('serve_icon', filename=url.icon) }}" alt="{{ url.name }}" class="mb-2" style="width: 32px; height: 32px;">
+          {% endif %}
+          <h5 class="card-title">{{ url.name }}</h5>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% if is_admin %}
+  <div class="col-md-3 mb-4">
+    <div class="card url-tile add-tile" data-bs-toggle="modal" data-bs-target="#addUrlModal">
+      <div class="card-body text-center">
+        <i class="bi bi-plus-circle fs-2 mb-2"></i>
+        <h5 class="card-title">Add URL</h5>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if is_admin %}
+<!-- Modal для добавления URL -->
+<div class="modal fade" id="addUrlModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New URL</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addUrlForm">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">URL</label>
+            <input type="url" class="form-control" name="url" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Icon</label>
+            <select class="form-select" name="icon">
+              {% for icon in icons %}
+              <option value="{{ icon }}">{{ icon|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <input type="hidden" name="action" value="add">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveUrl">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal для редактирования URL -->
+<div class="modal fade" id="editUrlModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit URL</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editUrlForm">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">URL</label>
+            <input type="url" class="form-control" name="url" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Icon</label>
+            <select class="form-select" name="icon">
+              {% for icon in icons %}
+              <option value="{{ icon }}">{{ icon|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <input type="hidden" name="id" id="editUrlId">
+          <input type="hidden" name="action" value="edit">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="updateUrl">Update</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modal для вывода результатов -->
+<div class="modal fade" id="outputModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Command Output</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <pre id="outputText" class="text-white bg-dark p-3"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
