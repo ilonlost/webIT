@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row animate__animated animate__fadeIn">
+  {% for tool in tools %}
+  <div class="col-md-3 mb-4">
+    <div class="card url-tile tool-tile">
+      <div class="card-body text-center position-relative">
+        <i class="bi bi-gear fs-2 mb-2"></i>
+        <h5 class="card-title">{{ tool.name }}</h5>
+        <p class="card-text text-muted">{{ tool.desc }}</p>
+        <button class="btn btn-primary run-btn mt-2"
+                data-type="tool"
+                data-name="{{ tool.command }}"
+                {% if not tool.available %}disabled{% endif %}>
+          {% if tool.available %}Run{% else %}Not Available{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal для вывода результатов -->
+<div class="modal fade" id="outputModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Command Output</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <pre id="outputText" class="text-white"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
