@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row animate__animated animate__fadeIn">
+  <div class="col-md-12">
+    <div class="card url-tile">
+      <div class="card-body">
+        <h5 class="card-title">System Information</h5>
+        <p><strong>OS:</strong> {{ sys_info.os }}</p>
+        <p><strong>CPU Usage:</strong> {{ sys_info.cpu_usage }}</p>
+        <p><strong>RAM Usage:</strong> {{ sys_info.ram_usage }}</p>
+        <p><strong>Disk Usage:</strong> {{ sys_info.disk_usage }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
