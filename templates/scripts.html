@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row animate__animated animate__fadeIn">
+    {% for script in scripts %}
+    <div class="col-md-3 mb-4">
+        <div class="card url-tile script-tile">
+            <div class="card-body text-center position-relative">
+                {% if is_admin %}
+                <button class="btn btn-sm btn-danger delete-script position-absolute top-0 end-0 m-2"
+                        data-id="{{ script.id }}">×</button>
+                <button class="btn btn-sm btn-warning edit-script position-absolute top-0 start-0 m-2"
+                        data-id="{{ script.id }}" data-bs-toggle="modal"
+                        data-bs-target="{% if script.name.endswith('.html') %}#editHtmlModal{% else %}#editScriptModal{% endif %}">✎</button>
+                {% endif %}
+                {% if script.icon.startswith('http') or script.icon in ['globe', 'github', 'server', 'gear', 'cpu', 'display', 'hdd'] %}
+                <i class="bi bi-{{ script.icon }} fs-2 mb-2"></i>
+                {% else %}
+                <img src="{{ url_for('serve_icon', filename=script.icon) }}" alt="{{ script.name }}" class="mb-2" style="width: 32px; height: 32px;">
+                {% endif %}
+                <h5 class="card-title">{{ script.name }}</h5>
+                <p class="card-text text-muted">{{ script.desc }}</p>
+                <button class="btn btn-primary run-btn mt-2"
+                        data-type="script"
+                        data-name="{{ script.name }}"
+                        data-id="{{ script.id }}"
+                        data-bs-toggle="modal"
+                        data-bs-target="#runScriptModal"
+                        {% if not script.available %}disabled{% endif %}>
+                    {% if script.available %}Run{% else %}Not Available{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% if is_admin %}
+    <div class="col-md-3 mb-4">
+        <div class="card url-tile add-tile" data-bs-toggle="modal" data-bs-target="#addScriptModal">
+            <div class="card-body text-center">
+                <i class="bi bi-plus-circle fs-2 mb-2"></i>
+                <h5 class="card-title">Add Script</h5>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if is_admin %}
+<!-- Modal для добавления скрипта -->
+<div class="modal fade" id="addScriptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Script</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addScriptForm">
+                    <div class="mb-3">
+                        <label class="form-label">Script Name (e.g., test.py, test.ps1, test.html)</label>
+                        <input type="text" class="form-control" name="name" required pattern=".*\.(py|ps1|html)$">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" name="desc" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Icon</label>
+                        <select class="form-select" name="icon">
+                            {% for icon in icons %}
+                            <option value="{{ icon }}" {% if icon =='gear' %}selected{% endif %}>{{ icon|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" name="action" value="add">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveScript">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal для редактирования скрипта -->
+<div class="modal fade" id="editScriptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Script</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editScriptForm">
+                    <div class="mb-3">
+                        <label class="form-label">Script Name (e.g., test.py, test.ps1, test.html)</label>
+                        <input type="text" class="form-control" name="name" required pattern=".*\.(py|ps1|html)$">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" name="desc" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Icon</label>
+                        <select class="form-select" name="icon">
+                            {% for icon in icons %}
+                            <option value="{{ icon }}">{{ icon|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" name="id" id="editScriptId">
+                    <input type="hidden" name="action" value="edit">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="updateScript">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal для редактирования HTML -->
+<div class="modal fade" id="editHtmlModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit HTML Script</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editHtmlForm">
+                    <div class="mb-3">
+                        <label class="form-label">HTML Content</label>
+                        <div id="htmlEditor" style="height: 300px; border: 1px solid #475569;"></div>
+                    </div>
+                    <input type="hidden" name="id" id="editHtmlId">
+                    <input type="hidden" name="content" id="htmlContent">
+                    <input type="hidden" name="action" value="edit_html">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveHtml">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal для загрузки скрипта -->
+<div class="modal fade" id="uploadScriptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Script</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadScriptForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Script File (.py, .ps1, .html)</label>
+                        <input type="file" class="form-control" name="file" accept=".py,.ps1,.html" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" name="desc" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Icon</label>
+                        <select class="form-select" name="icon">
+                            {% for icon in icons %}
+                            <option value="{{ icon }}" {% if icon =='gear' %}selected{% endif %}>{{ icon|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" name="action" value="upload">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="uploadScript">Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal для запуска скрипта -->
+<div class="modal fade" id="runScriptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Run Script</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="runScriptForm">
+                    <div class="mb-3">
+                        <label class="form-label">Parameters (space-separated)</label>
+                        <input type="text" class="form-control" name="params" placeholder="e.g., -param1 value1">
+                    </div>
+                    <input type="hidden" name="script_name" id="runScriptName">
+                </form>
+                <pre id="scriptOutput" class="text-white bg-dark p-3" style="max-height: 200px; overflow-y: auto;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="executeScript">Execute</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal для вывода результатов -->
+<div class="modal fade" id="outputModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Command Output</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="outputText" class="text-white bg-dark p-3"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ace-builds@1.4.12/src-min-noconflict/ace.js"></script>
+<script>
+    let editor;
+    document.addEventListener('DOMContentLoaded', function() {
+        editor = ace.edit("htmlEditor");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/html");
+        editor.setOptions({fontSize: "14px"});
+    });
+</script>
+{% endblock %}
