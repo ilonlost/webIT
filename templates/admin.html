@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row animate__animated animate__fadeIn">
+  <div class="col-12">
+    <div class="card url-tile">
+      <div class="card-body">
+        <h5 class="card-title">Admin Panel</h5>
+        <button class="btn btn-danger mb-3" id="logoutBtn">Logout</button>
+        <button class="btn btn-warning mb-3" id="clearLogsBtn">Clear Logs</button>
+
+        <h6>Manage URLs <button class="btn btn-sm btn-primary sort-btn" data-type="urls">Sort by Name</button></h6>
+        <ul class="list-group mb-3" id="urlsList">
+          {% for url in urls %}
+          <li class="list-group-item d-flex justify-content-between align-items-center bg-dark text-white" data-name="{{ url.name }}">
+            {{ url.name }} ({{ url.url }})
+            <div>
+              <button class="btn btn-sm btn-warning edit-url" data-id="{{ url.id }}" data-bs-toggle="modal" data-bs-target="#editUrlModal">Edit</button>
+              <button class="btn btn-sm btn-danger delete-url" data-id="{{ url.id }}">Delete</button>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addUrlModal">Add URL</button>
+
+        <h6>Manage Scripts <button class="btn btn-sm btn-primary sort-btn" data-type="scripts">Sort by Name</button></h6>
+        <ul class="list-group mb-3" id="scriptsList">
+          {% for script in scripts %}
+          <li class="list-group-item d-flex justify-content-between align-items-center bg-dark text-white" data-name="{{ script.name }}">
+            {{ script.name }} - {{ script.desc }}
+            <div>
+              <button class="btn btn-sm btn-warning edit-script" data-id="{{ script.id }}" data-bs-toggle="modal"
+                      data-bs-target="{% if script.name.endswith('.html') %}#editHtmlModal{% else %}#editScriptModal{% endif %}">Edit</button>
+              <button class="btn btn-sm btn-danger delete-script" data-id="{{ script.id }}">Delete</button>
+              <a href="{{ url_for('download_script', script_name=script.name) }}" class="btn btn-sm btn-success">Download</a>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addScriptModal">Add Script</button>
+        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#uploadScriptModal">Upload Script</button>
+
+        <h6>Manage Icons</h6>
+        <form id="addIconForm" enctype="multipart/form-data" class="mb-3">
+          <div class="input-group">
+            <input type="file" class="form-control" name="icon" accept=".png,.jpg,.jpeg,.svg" required>
+            <button type="button" class="btn btn-primary" id="uploadIcon">Upload Icon</button>
+          </div>
+        </form>
+        <div class="mb-3">
+          {% for icon in icons %}
+          {% if not (icon in ['globe', 'github', 'server', 'gear', 'cpu', 'display', 'hdd']) %}
+          <img src="{{ url_for('serve_icon', filename=icon) }}" alt="{{ icon }}" style="width: 32px; height: 32px; margin: 5px;">
+          {% endif %}
+          {% endfor %}
+        </div>
+
+        <h6>System Logs</h6>
+        <pre class="bg-dark text-white p-3" style="max-height: 400px; overflow-y: auto;">
+                    {% for log in logs %}{{ log }}{% endfor %}
+                </pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальные окна -->
+<!-- Add URL Modal -->
+<div class="modal fade" id="addUrlModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New URL</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addUrlForm">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">URL</label>
+            <input type="url" class="form-control" name="url" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Icon</label>
+            <select class="form-select" name="icon">
+              {% for icon in icons %}
+              <option value="{{ icon }}">{{ icon|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <input type="hidden" name="action" value="add">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveUrl">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit URL Modal -->
+<div class="modal fade" id="editUrlModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit URL</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editUrlForm">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">URL</label>
+            <input type="url" class="form-control" name="url" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Icon</label>
+            <select class="form-select" name="icon">
+              {% for icon in icons %}
+              <option value="{{ icon }}">{{ icon|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <input type="hidden" name="id" id="editUrlId">
+          <input type="hidden" name="action" value="edit">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="updateUrl">Update</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Script Modal -->
+<div class="modal fade" id="addScriptModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Script</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addScriptForm">
+          <div class="mb-3">
+            <label class="form-label">Script Name (e.g., test.py, test.ps1, test.html)</label>
+            <input type="text" class="form-control" name="name" required pattern=".*\.(py|ps1|html)$">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <input type="text" class="form-control" name="desc" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Icon</label>
+            <select class="form-select" name="icon">
+              {% for icon in icons %}
+              <option value="{{ icon }}" {% if icon =='gear' %}selected{% endif %}>{{ icon|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <input type="hidden" name="action" value="add">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveScript">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Script Modal -->
+<div class="modal fade" id="editScriptModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Script</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editScriptForm">
+          <div class="mb-3">
+            <label class="form-label">Script Name (e.g., test.py, test.ps1, test.html)</label>
+            <input type="text" class="form-control" name="name" required pattern=".*\.(py|ps1|html)$">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <input type="text" class="form-control" name="desc" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Icon</label>
+            <select class="form-select" name="icon">
+              {% for icon in icons %}
+              <option value="{{ icon }}">{{ icon|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <input type="hidden" name="id" id="editScriptId">
+          <input type="hidden" name="action" value="edit">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="updateScript">Update</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit HTML Modal -->
+<div class="modal fade" id="editHtmlModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit HTML Script</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editHtmlForm">
+          <div class="mb-3">
+            <label class="form-label">HTML Content</label>
+            <div id="htmlEditor" style="height: 300px; border: 1px solid #475569;"></div>
+          </div>
+          <input type="hidden" name="id" id="editHtmlId">
+          <input type="hidden" name="content" id="htmlContent">
+          <input type="hidden" name="action" value="edit_html">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveHtml">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Script Modal -->
+<div class="modal fade" id="uploadScriptModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Upload Script</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="uploadScriptForm" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label">Script File (.py, .ps1, .html)</label>
+            <input type="file" class="form-control" name="file" accept=".py,.ps1,.html" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <input type="text" class="form-control" name="desc" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Icon</label>
+            <select class="form-select" name="icon">
+              {% for icon in icons %}
+              <option value="{{ icon }}" {% if icon =='gear' %}selected{% endif %}>{{ icon|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <input type="hidden" name="action" value="upload">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="uploadScript">Upload</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/ace-builds@1.4.12/src-min-noconflict/ace.js"></script>
+<script>
+  let editor;
+  document.addEventListener('DOMContentLoaded', function() {
+    editor = ace.edit("htmlEditor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/html");
+    editor.setOptions({fontSize: "14px"});
+  });
+</script>
