@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row animate__animated animate__fadeIn">
+    <div class="col-md-4">
+        <div class="card p-3 mb-4">
+            <h3>System Status</h3>
+            <p>CPU: 65%</p>
+            <p>RAM: 4.2/8 GB</p>
+            <p>Disk: 120/500 GB</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 mb-4">
+            <h3>Network</h3>
+            <p>Status: Online</p>
+            <p>IP: 192.168.1.100</p>
+            <p>Uptime: 5d 14h</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 mb-4">
+            <h3>Tasks</h3>
+            <p>Pending: 3</p>
+            <p>Running: 1</p>
+            <p>Completed: 15</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
